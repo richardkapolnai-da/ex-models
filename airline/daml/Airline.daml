@@ -219,11 +219,6 @@ dajet4 = scenario do
       flightCid
       seat = "3A"
 
-  submitMustFail da do
-    exercise (ticketCids !! 1) CheckIn with
-      flightCid
-      seat = "3A"
-
   return (ticketCids, flightCid)
 
 dajet5 = scenario do
@@ -232,6 +227,11 @@ dajet5 = scenario do
     <- mapA getParty ["P1", "P2", "P3", "P4"]
 
   (ticketCids, flightCid) <- dajet4
+
+  submitMustFail da do
+    exercise (ticketCids !! 1) CheckIn with
+      flightCid
+      seat = "3A"
 
   (_, flightCid) <- submit da do
     exercise (ticketCids !! 1) CheckIn with
