@@ -198,72 +198,72 @@ dajet4 = scenario do
   passengers@[p1, p2, p3, p4]
     <- mapA getParty ["P1", "P2", "P3", "P4"]
 
-  (ticketCids, flightCid) <- dajet3
+  ([t1,t2,t3,t4,t5], flightCid) <- dajet3
 
   submitMustFail da do exercise flightCid TakeOff
   submitMustFail p1 do
-    exercise (ticketCids !! 0) CheckIn with
+    exercise t1 CheckIn with
       flightCid
       seat = "1A"
   submitMustFail da do
-    exercise (ticketCids !! 0) CheckIn with
+    exercise t1 CheckIn with
       flightCid
       seat = "1A"
   submitMustFail p2 do
-    exercise (ticketCids !! 2) CheckIn with
+    exercise t3 CheckIn with
       flightCid
       seat = "1A"
 
   (_, flightCid) <- submit da do
-    exercise (ticketCids !! 0) CheckIn with
+    exercise t1 CheckIn with
       flightCid
       seat = "3A"
 
-  return (ticketCids, flightCid)
+  return ([t2,t3,t4,t5], flightCid)
 
 dajet5 = scenario do
   da <- getParty "DA"
   passengers@[p1, p2, p3, p4]
     <- mapA getParty ["P1", "P2", "P3", "P4"]
 
-  (ticketCids, flightCid) <- dajet4
+  ([t2,t3,t4,t5], flightCid) <- dajet4
 
   submitMustFail da do
-    exercise (ticketCids !! 1) CheckIn with
+    exercise t2 CheckIn with
       flightCid
       seat = "3A"
 
   (_, flightCid) <- submit da do
-    exercise (ticketCids !! 1) CheckIn with
+    exercise t2 CheckIn with
       flightCid
       seat = "3B"
 
   submitMustFail da do
-    exercise (ticketCids !! 2) CheckIn with
+    exercise t3 CheckIn with
       flightCid
       seat = "2A"
 
   (_, flightCid) <- submit p3 do
-    exercise (ticketCids !! 2) CheckIn with
+    exercise t3 CheckIn with
       flightCid
       seat = "2A"
 
   (_, flightCid) <- submit p4 do
-    exercise (ticketCids !! 3) CheckIn with
+    exercise t4 CheckIn with
       flightCid
       seat = "2B"
 
-  return (ticketCids, flightCid)
+  return (t5, flightCid)
 
 dajet6 = scenario do
   da <- getParty "DA"
   passengers@[p1, p2, p3, p4, p5]
     <- mapA getParty ["P1", "P2", "P3", "P4", "P5"]
 
-  (ticketCids, flightCid) <- dajet5
+  (t5, flightCid) <- dajet5
 
   (_, flightCid) <- submit p5 do
-    exercise (ticketCids !! 4) CheckIn with
+    exercise t5 CheckIn with
       flightCid
       seat = "1A"
 
