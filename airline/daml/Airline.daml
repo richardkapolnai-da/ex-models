@@ -154,23 +154,14 @@ dajet2 = scenario do
   passengers@[p1, p2, p3, p4]
     <- mapA getParty ["P1", "P2", "P3", "P4"]
 
-  (inviteCids, flightCid) <- dajet1
+  ([i1,i2,i3,i4,i5], flightCid) <- dajet1
 
-  (ticketCids, flightCid) <- foldr
-    (\(passenger, inviteCid) acc -> do
-      (ticketCids, flightCid) <- acc
-      submit passenger do
-        (ticketCid, flightCid) <- exercise inviteCid Accept_Invite with flightCid
-        return (ticketCid :: ticketCids, flightCid) )
-    (return ([], flightCid))
-    (zip passengers inviteCids)
+  (t1,flightCid) <- submit p1 do exercise i1 Accept_Invite with flightCid
+  (t2,flightCid) <- submit p2 do exercise i2 Accept_Invite with flightCid
+  (t3,flightCid) <- submit p3 do exercise i3 Accept_Invite with flightCid
+  (t4,flightCid) <- submit p4 do exercise i4 Accept_Invite with flightCid
 
-  debug (zip passengers inviteCids)
-{- output:
-  [('P1',<contract-id>),('P2',<contract-id>),('P3',<contract-id>),('P4',<contract-id>),('P5',<contract-id>)]
--}
-
-  return (inviteCids, ticketCids, flightCid)
+  return ([i1,i2,i3,i4,i5], [t1,t2,t3,t4], flightCid)
 
 dajet3 = scenario do
   da <- getParty "DA"
@@ -181,7 +172,7 @@ dajet3 = scenario do
 
   let inviteCid = last inviteCids
 
-  (t5, flightCid) <- submit p5 do
+  (t5,flightCid) <- submit p5 do
     exercise inviteCid Accept_Invite with flightCid
 
   return ([t1,t2,t3,t4,t5], flightCid)
