@@ -257,8 +257,7 @@ dajet5 = scenario do
 
 dajet6 = scenario do
   da <- getParty "DA"
-  passengers@[p1, p2, p3, p4, p5]
-    <- mapA getParty ["P1", "P2", "P3", "P4", "P5"]
+  p5 <- getParty "P5"
 
   (t5, flightCid) <- dajet5
 
@@ -268,7 +267,6 @@ dajet6 = scenario do
       seat = "1A"
 
   return flightCid
-
 
 dajet = scenario do
   da <- getParty "DA"
