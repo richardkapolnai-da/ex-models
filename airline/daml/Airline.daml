@@ -5,10 +5,7 @@ module Airline where
 
 import DA.Assert
 import DA.List
-import DA.Optional
 import DA.TextMap as TM
-
-data Class = Coach | Business | First deriving (Eq, Show, Ord)
 
 template FlightInvite
   with
@@ -35,7 +32,6 @@ template FlightInvite
 
 template Ticket
   with
-    ticketClass : Class
     ticketRef : Text
     flightNumber : Text
     airline : Party
@@ -55,8 +51,7 @@ template Ticket
         None === seatNumber
         flight.flightNumber === flightNumber
         flight.airline === airline
-        let seatClass = (TM.lookup seat flight.seatClasses)
-        assert $ fromSome seatClass <= ticketClass
+        assert $ elem seat flight.seats
         newTicketCid <- create this with seatNumber = Some seat
         newFlightCid <- exercise flightCid AssignSeat with
           passenger; seat; ticketRef
@@ -64,7 +59,7 @@ template Ticket
 
 template Flight
   with
-    seatClasses : TextMap Class
+    seats : [Text]
     allocation : TextMap Text
     flightNumber : Text
     airline : Party
@@ -106,48 +101,46 @@ dajet1 = scenario do
     <- mapA getParty ["P1", "P2", "P3", "P4", "P5"]
   let
     flightNumber = "DA Force One"
-    classes = [Coach, Coach, Business, Business, First]
-    seatClasses = TM.fromList
-      [ ("1A", First)
-      , ("1B", First)
-      , ("2A", Business)
-      , ("2B", Business)
-      , ("3A", Coach)
-      , ("3B", Coach) ]
+    seatChoices = [False, False, True, True, True, True]
+    seats =
+      [ "1A"
+      , "1B"
+      , "2A"
+      , "2B"
+      , "3A"
+      , "3B"]
     tickets = map
-      (\(seq, passenger, ticketClass) ->
+      (\(seq, passenger, seatChoice) ->
         Ticket with
-          ticketClass
           ticketRef = show seq
           flightNumber
           airline = da
           passenger
           seatNumber = None
-          seatChoice = ticketClass > Coach
+          seatChoice
       )
-      (zip3 [1..5] passengers classes)
+      (zip3 [1..5] passengers seatChoices)
 
   debug tickets
 {- output:
   [
     Ticket {
-      ticketClass = Coach,
       ticketRef = "1",
       flightNumber = "DA Force One",
       airline = 'DA',
       passenger = 'P1',
       seatNumber = None,
       seatChoice = False},
-    Ticket {ticketClass = Coach, ticketRef = "2", flightNumber = "DA Force One", airline = 'DA', passenger = 'P2', seatNumber = None, seatChoice = False},
-    Ticket {ticketClass = Business, ticketRef = "3", flightNumber = "DA Force One", airline = 'DA', passenger = 'P3', seatNumber = None, seatChoice = True},
-    Ticket {ticketClass = Business, ticketRef = "4", flightNumber = "DA Force One", airline = 'DA', passenger = 'P4', seatNumber = None, seatChoice = True},
-    Ticket {ticketClass = First, ticketRef = "5", flightNumber = "DA Force One", airline = 'DA', passenger = 'P5', seatNumber = None, seatChoice = True}]
+    Ticket {ticketRef = "2", flightNumber = "DA Force One", airline = 'DA', passenger = 'P2', seatNumber = None, seatChoice = False},
+    Ticket {ticketRef = "3", flightNumber = "DA Force One", airline = 'DA', passenger = 'P3', seatNumber = None, seatChoice = True},
+    Ticket {ticketRef = "4", flightNumber = "DA Force One", airline = 'DA', passenger = 'P4', seatNumber = None, seatChoice = True},
+    Ticket {ticketRef = "5", flightNumber = "DA Force One", airline = 'DA', passenger = 'P5', seatNumber = None, seatChoice = True}]
 -}
 
   submit da do
     inviteCids <- mapA (\ticket -> create FlightInvite with ticket) tickets
     flightCid <- create Flight with
-      seatClasses
+      seats
       allocation = TM.empty
       flightNumber
       airline = da
@@ -208,7 +201,7 @@ dajet4 = scenario do
   submitMustFail da do
     exercise t1 CheckIn with
       flightCid
-      seat = "1A"
+      seat = "123ABC"
   submitMustFail p2 do
     exercise t3 CheckIn with
       flightCid
