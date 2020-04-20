@@ -55,7 +55,8 @@ template Ticket
         None === seatNumber
         flight.flightNumber === flightNumber
         flight.airline === airline
-        assert $ fromSome (TM.lookup seat flight.seatClasses) <= ticketClass
+        let seatClass = (TM.lookup seat flight.seatClasses)
+        assert $ fromSome seatClass <= ticketClass
         newTicketCid <- create this with seatNumber = Some seat
         newFlightCid <- exercise flightCid AssignSeat with
           passenger; seat; ticketRef
@@ -99,7 +100,7 @@ template Flight
         length passengers === TM.size allocation
         return ()
 
-dajet = scenario do
+dajet1 = scenario do
   da <- getParty "DA"
   passengers@[p1, p2, p3, p4, p5]
     <- mapA getParty ["P1", "P2", "P3", "P4", "P5"]
@@ -126,7 +127,24 @@ dajet = scenario do
       )
       (zip3 [1..5] passengers classes)
 
-  (inviteCids, flightCid) <- submit da do
+  debug tickets
+{- output:
+  [
+    Ticket {
+      ticketClass = Coach,
+      ticketRef = "1",
+      flightNumber = "DA Force One",
+      airline = 'DA',
+      passenger = 'P1',
+      seatNumber = None,
+      seatChoice = False},
+    Ticket {ticketClass = Coach, ticketRef = "2", flightNumber = "DA Force One", airline = 'DA', passenger = 'P2', seatNumber = None, seatChoice = False},
+    Ticket {ticketClass = Business, ticketRef = "3", flightNumber = "DA Force One", airline = 'DA', passenger = 'P3', seatNumber = None, seatChoice = True},
+    Ticket {ticketClass = Business, ticketRef = "4", flightNumber = "DA Force One", airline = 'DA', passenger = 'P4', seatNumber = None, seatChoice = True},
+    Ticket {ticketClass = First, ticketRef = "5", flightNumber = "DA Force One", airline = 'DA', passenger = 'P5', seatNumber = None, seatChoice = True}]
+-}
+
+  submit da do
     inviteCids <- mapA (\ticket -> create FlightInvite with ticket) tickets
     flightCid <- create Flight with
       seatClasses
@@ -137,6 +155,14 @@ dajet = scenario do
       passengers = []
     return (inviteCids, flightCid)
 
+dajet2 = scenario do
+  da <- getParty "DA"
+  -- remove p5!!!
+  passengers@[p1, p2, p3, p4]
+    <- mapA getParty ["P1", "P2", "P3", "P4"]
+
+  (inviteCids, flightCid) <- dajet1
+
   (ticketCids, flightCid) <- foldr
     (\(passenger, inviteCid) acc -> do
       (ticketCids, flightCid) <- acc
@@ -145,6 +171,34 @@ dajet = scenario do
         return (ticketCid :: ticketCids, flightCid) )
     (return ([], flightCid))
     (zip passengers inviteCids)
+
+  debug (zip passengers inviteCids)
+{- output:
+  [('P1',<contract-id>),('P2',<contract-id>),('P3',<contract-id>),('P4',<contract-id>),('P5',<contract-id>)]
+-}
+
+  return (inviteCids, ticketCids, flightCid)
+
+dajet3 = scenario do
+  da <- getParty "DA"
+  passengers@[p1, p2, p3, p4, p5]
+    <- mapA getParty ["P1", "P2", "P3", "P4", "P5"]
+
+  (inviteCids, [t1,t2,t3,t4], flightCid) <- dajet2
+
+  let inviteCid = last inviteCids
+
+  (t5, flightCid) <- submit p5 do
+    exercise inviteCid Accept_Invite with flightCid
+
+  return ([t1,t2,t3,t4,t5], flightCid)
+
+dajet4 = scenario do
+  da <- getParty "DA"
+  passengers@[p1, p2, p3, p4]
+    <- mapA getParty ["P1", "P2", "P3", "P4"]
+
+  (ticketCids, flightCid) <- dajet3
 
   submitMustFail da do exercise flightCid TakeOff
   submitMustFail p1 do
@@ -170,6 +224,15 @@ dajet = scenario do
       flightCid
       seat = "3A"
 
+  return (ticketCids, flightCid)
+
+dajet5 = scenario do
+  da <- getParty "DA"
+  passengers@[p1, p2, p3, p4]
+    <- mapA getParty ["P1", "P2", "P3", "P4"]
+
+  (ticketCids, flightCid) <- dajet4
+
   (_, flightCid) <- submit da do
     exercise (ticketCids !! 1) CheckIn with
       flightCid
@@ -190,9 +253,26 @@ dajet = scenario do
       flightCid
       seat = "2B"
 
+  return (ticketCids, flightCid)
+
+dajet6 = scenario do
+  da <- getParty "DA"
+  passengers@[p1, p2, p3, p4, p5]
+    <- mapA getParty ["P1", "P2", "P3", "P4", "P5"]
+
+  (ticketCids, flightCid) <- dajet5
+
   (_, flightCid) <- submit p5 do
     exercise (ticketCids !! 4) CheckIn with
       flightCid
       seat = "1A"
+
+  return flightCid
+
+
+dajet = scenario do
+  da <- getParty "DA"
+
+  flightCid <- dajet6
 
   submit da do exercise flightCid TakeOff
