@@ -180,15 +180,22 @@ dajet4 = scenario do
 
   ([t1, t2, t3, t4, t5], flightCid) <- dajet3
 
+  -- empty flight shouldn't fly:
   submitMustFail da do exercise flightCid TakeOff
+
+  -- t1 cannot choose:
   submitMustFail p1 do
     exercise t1 CheckIn with
       flightCid
       seat = "1A"
+
+  -- invalid seat:
   submitMustFail da do
     exercise t1 CheckIn with
       flightCid
       seat = "123ABC"
+
+  -- t3 does not belong to p2
   submitMustFail p2 do
     exercise t3 CheckIn with
       flightCid
@@ -207,6 +214,7 @@ dajet5 = scenario do
 
   ([t2, t3, t4, t5], flightCid) <- dajet4
 
+  -- seat "3A" is taken
   submitMustFail da do
     exercise t2 CheckIn with
       flightCid
@@ -217,6 +225,7 @@ dajet5 = scenario do
       flightCid
       seat = "3B"
 
+  -- p3 can choose seat
   submitMustFail da do
     exercise t3 CheckIn with
       flightCid
