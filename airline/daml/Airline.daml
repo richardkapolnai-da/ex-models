@@ -51,7 +51,7 @@ template Ticket
         None === seatNumber
         flight.flightNumber === flightNumber
         flight.airline === airline
-        assert $ elem seat flight.seats
+        assert (elem seat flight.seats)
         newTicketCid <- create this with seatNumber = Some seat
         newFlightCid <- exercise flightCid AssignSeat with
           passenger; seat; ticketRef
@@ -97,8 +97,7 @@ template Flight
 
 dajet1 = scenario do
   da <- getParty "DA"
-  passengers@[p1, p2, p3, p4, p5]
-    <- mapA getParty ["P1", "P2", "P3", "P4", "P5"]
+  passengers <- mapA getParty ["P1", "P2", "P3", "P4", "P5"]
   let
     flightNumber = "DA Force One"
     seatChoices = [False, False, True, True, True, True]
@@ -150,39 +149,36 @@ dajet1 = scenario do
 
 dajet2 = scenario do
   da <- getParty "DA"
-  -- remove p5!!!
-  passengers@[p1, p2, p3, p4]
-    <- mapA getParty ["P1", "P2", "P3", "P4"]
+  -- p5 is missing!
+  [p1, p2, p3, p4] <- mapA getParty ["P1", "P2", "P3", "P4"]
 
-  ([i1,i2,i3,i4,i5], flightCid) <- dajet1
+  ([i1, i2, i3, i4, i5], flightCid) <- dajet1
 
-  (t1,flightCid) <- submit p1 do exercise i1 Accept_Invite with flightCid
-  (t2,flightCid) <- submit p2 do exercise i2 Accept_Invite with flightCid
-  (t3,flightCid) <- submit p3 do exercise i3 Accept_Invite with flightCid
-  (t4,flightCid) <- submit p4 do exercise i4 Accept_Invite with flightCid
+  (t1, flightCid) <- submit p1 do exercise i1 Accept_Invite with flightCid
+  (t2, flightCid) <- submit p2 do exercise i2 Accept_Invite with flightCid
+  (t3, flightCid) <- submit p3 do exercise i3 Accept_Invite with flightCid
+  (t4, flightCid) <- submit p4 do exercise i4 Accept_Invite with flightCid
 
   return ([i1,i2,i3,i4,i5], [t1,t2,t3,t4], flightCid)
 
 dajet3 = scenario do
   da <- getParty "DA"
-  passengers@[p1, p2, p3, p4, p5]
-    <- mapA getParty ["P1", "P2", "P3", "P4", "P5"]
+  p5 <- getParty "P5"
 
-  (inviteCids, [t1,t2,t3,t4], flightCid) <- dajet2
+  (inviteCids, [t1, t2, t3, t4], flightCid) <- dajet2
 
   let inviteCid = last inviteCids
 
-  (t5,flightCid) <- submit p5 do
+  (t5, flightCid) <- submit p5 do
     exercise inviteCid Accept_Invite with flightCid
 
-  return ([t1,t2,t3,t4,t5], flightCid)
+  return ([t1, t2, t3, t4, t5], flightCid)
 
 dajet4 = scenario do
   da <- getParty "DA"
-  passengers@[p1, p2, p3, p4]
-    <- mapA getParty ["P1", "P2", "P3", "P4"]
+  [p1, p2] <- mapA getParty ["P1", "P2"]
 
-  ([t1,t2,t3,t4,t5], flightCid) <- dajet3
+  ([t1, t2, t3, t4, t5], flightCid) <- dajet3
 
   submitMustFail da do exercise flightCid TakeOff
   submitMustFail p1 do
@@ -203,14 +199,13 @@ dajet4 = scenario do
       flightCid
       seat = "3A"
 
-  return ([t2,t3,t4,t5], flightCid)
+  return ([t2, t3, t4, t5], flightCid)
 
 dajet5 = scenario do
   da <- getParty "DA"
-  passengers@[p1, p2, p3, p4]
-    <- mapA getParty ["P1", "P2", "P3", "P4"]
+  [p3, p4] <- mapA getParty ["P3", "P4"]
 
-  ([t2,t3,t4,t5], flightCid) <- dajet4
+  ([t2, t3, t4, t5], flightCid) <- dajet4
 
   submitMustFail da do
     exercise t2 CheckIn with
