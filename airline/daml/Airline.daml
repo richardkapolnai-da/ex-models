@@ -47,11 +47,13 @@ template Ticket
         seat : Text
       controller if seatChoice then passenger else airline
       do
-        flight <- fetch flightCid
         None === seatNumber
+
+        flight <- fetch flightCid
         flight.flightNumber === flightNumber
         flight.airline === airline
-        assert (elem seat flight.seats)
+        assert (seat `elem` flight.seats)
+
         newTicketCid <- create this with seatNumber = Some seat
         newFlightCid <- exercise flightCid AssignSeat with
           passenger; seat; ticketRef
@@ -87,17 +89,20 @@ template Flight
       controller [airline, passenger]
       do
         assert (passenger `elem` invitedPassengers)
+
         create this with passengers = passenger :: passengers
 
     choice TakeOff : ()
       controller airline
       do
         length passengers === TM.size allocation
+
         return ()
 
 dajet1 = scenario do
   da <- getParty "DA"
   passengers <- mapA getParty ["P1", "P2", "P3", "P4", "P5"]
+
   let
     flightNumber = "DA Force One"
     seatChoices = [False, False, True, True, True, True]
@@ -119,6 +124,9 @@ dajet1 = scenario do
           seatChoice
       )
       (zip3 [1..5] passengers seatChoices)
+
+  debug (zip3 [1..5] passengers seatChoices)
+-- output:  [(1,'P1',False),(2,'P2',False),(3,'P3',True),(4,'P4',True),(5,'P5',True)]
 
   debug tickets
 {- output:
@@ -167,10 +175,8 @@ dajet3 = scenario do
 
   (inviteCids, [t1, t2, t3, t4], flightCid) <- dajet2
 
-  let inviteCid = last inviteCids
-
   (t5, flightCid) <- submit p5 do
-    exercise inviteCid Accept_Invite with flightCid
+    exercise (last inviteCids) Accept_Invite with flightCid
 
   return ([t1, t2, t3, t4, t5], flightCid)
 
