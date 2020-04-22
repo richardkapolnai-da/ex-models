@@ -46,18 +46,17 @@ template Ticket
         seat : Text
       controller if seatChoice then passenger else airline
       do
-
         flight <- fetch flightCid
         flight.flightNumber === flightNumber
         flight.airline === airline
         assert (seat `elem` flight.seats)
 
-        newTicketCid <- create BoardingPass with
+        boardingPasssCid <- create BoardingPass with
           seatNumber = seat
           ticket = this
         newFlightCid <- exercise flightCid AssignSeat with
           passenger; seat; ticketRef
-        return (newTicketCid, newFlightCid)
+        return (boardingPasssCid, newFlightCid)
 
 template BoardingPass
   with
