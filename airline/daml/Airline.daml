@@ -40,7 +40,7 @@ template Ticket
   where
     signatory airline, passenger
 
-    choice CheckIn : (ContractId CheckedInTicket, ContractId Flight)
+    choice CheckIn : (ContractId BoardingPass, ContractId Flight)
       with
         flightCid : ContractId Flight
         seat : Text
@@ -52,23 +52,19 @@ template Ticket
         flight.airline === airline
         assert (seat `elem` flight.seats)
 
-        newTicketCid <- create CheckedInTicket with
+        newTicketCid <- create BoardingPass with
           seatNumber = seat
-          ..
+          ticket = this
         newFlightCid <- exercise flightCid AssignSeat with
           passenger; seat; ticketRef
         return (newTicketCid, newFlightCid)
 
-template CheckedInTicket
+template BoardingPass
   with
-    ticketRef : Text
-    flightNumber : Text
-    airline : Party
-    passenger : Party
+    ticket : Ticket
     seatNumber : Text
-    seatChoice : Bool
   where
-    signatory airline, passenger
+    signatory ticket.airline, ticket.passenger
 
 template Flight
   with
