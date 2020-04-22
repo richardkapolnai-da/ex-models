@@ -4,7 +4,6 @@
 module Airline where
 
 import DA.Assert
-import DA.List
 import DA.TextMap as TM
 
 template FlightInvite
@@ -171,16 +170,16 @@ dajet2 = scenario do
   (t3, flightCid) <- submit p3 do exercise i3 Accept_Invite with flightCid
   (t4, flightCid) <- submit p4 do exercise i4 Accept_Invite with flightCid
 
-  return ([i1,i2,i3,i4,i5], [t1,t2,t3,t4], flightCid)
+  return (i5, [t1,t2,t3,t4], flightCid)
 
 dajet3 = scenario do
   da <- getParty "DA"
   p5 <- getParty "P5"
 
-  (inviteCids, [t1, t2, t3, t4], flightCid) <- dajet2
+  (i5, [t1, t2, t3, t4], flightCid) <- dajet2
 
   (t5, flightCid) <- submit p5 do
-    exercise (last inviteCids) Accept_Invite with flightCid
+    exercise i5 Accept_Invite with flightCid
 
   return ([t1, t2, t3, t4, t5], flightCid)
 
